@@ -28,8 +28,7 @@ from art import text2art
 from datetime import date
 from time import sleep
 from simpleeval import SimpleEval, OperatorNotDefined, NumberTooHigh
-import google.generativeai as genai
-from google.api_core.exceptions import ResourceExhausted
+
 
 def cabecalho(nome: str) -> None:
     limpar_tela()
@@ -92,7 +91,7 @@ def menu(nome: str, nome_dados: str) -> None:
                     console.print('[light_green]vibe-os[/light_green]\n')
                 
                 case 'uname':
-                    console.print('Viberlinux 1.0\n')
+                    console.print('Viberlinux 1.0.1\n')
 
                 case '1' | 'calendar':
                     aplicativo = True
@@ -111,7 +110,7 @@ def menu(nome: str, nome_dados: str) -> None:
                     limpar_tela()
                     vibe_invaders.main()
 
-                case '5' | 'conquistas':
+                case '5' | 'achievements' | 'conquistas':
                     aplicativo = True
                     limpar_tela()
                     achievements_main()  
@@ -188,11 +187,12 @@ def menu(nome: str, nome_dados: str) -> None:
                                 erro('Comando não reconhecido.')
                                 continue
 
-                            comandos = {'clear': [1, 2], 'whoiam': [3, 4], 'pwd': [5, 6], 'hostname': [7, 8], 'uname': [9, 10],
-                            'protect': [11, 12], 'ls': [13, 16], 'man': [17, 20], 'cd': [21, 23], 'mkdir': [24, 27], 'touch': [28, 30],
-                            'rm': [31, 33], 'rmdir': [35, 37], 'cat': [38, 40], 'echo': [41, 45], 'viber': [46, 48],
-                            'calendar': [57, 58], 'music': [59, 60], 'vibegotchi': [61, 62], 'vibe_invaders': [63, 64],
-                            'help': [49, 50], 'shutdown': [51, 52]}
+                            comandos = {'clear': (1, 2), 'whoiam': (3, 4), 'pwd': (5, 6), 'hostname': (7, 8),
+                            'uname': (9, 10), 'protect': (11, 12), 'ls': (13, 16), 'man': (17, 20), 'cd': (21, 23),
+                            'mkdir': (24, 27), 'touch': (28, 30), 'rm': (31, 33), 'rmdir': (35, 37), 'cat': (38, 40),
+                            'echo': (41, 45), 'viber': (46, 48), 'calendar': (59, 60), 'music': (61, 62),
+                            'vibegotchi': (63, 64), 'vibe_invaders': (65, 66), 'achievements': (49, 50), 'help': (51, 52),
+                            'shutdown': (53, 54)}
                                 
                             if comando_separado[1] in comandos:
                                 caminho = Path(__file__).parent / 'help.md'
@@ -340,7 +340,7 @@ def menu(nome: str, nome_dados: str) -> None:
                         #     except:
                         #         erro(f'Viber não está disponível no momento.')
                         
-                        case 'hacker':
+                        case 'hacker' | 'matrix':
                             if len(comando_separado) != 2:
                                 erro('Comando inválido.')
 

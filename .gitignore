@@ -5,6 +5,7 @@ score/
 dados_usuario.json
 musica.json
 save.json
+conquistas.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

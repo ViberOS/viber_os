@@ -47,6 +47,8 @@
 **viber [prompt]:** Conversa com Viber, o assistente de IA do VibeOS.
 - Obrigatório um prompt.
 
+**achievements:** Mostra as conquistas do sistema.
+
 **help:** Imprime o manual de comandos do sistema.
 
 **shutdown:** Desliga o sistema.

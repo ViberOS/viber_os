@@ -89,6 +89,7 @@ def handle_menu_input(key, style: str = "retro", selected: int = 0):
     # confirma com Enter
     elif key in (b'\r', b'\n'):
         item = MENU_ITEMS[selected]
+
         if item == "jogar":
             return "game", style, selected
         elif item == "estilo":
@@ -96,5 +97,12 @@ def handle_menu_input(key, style: str = "retro", selected: int = 0):
             return "menu", new_style, selected
         elif item == "sair":
             return "exit", style, selected
+    
+    elif key in (b'K', b'M'):
+        item = MENU_ITEMS[selected]
+
+        if item == "estilo":
+            new_style = "vibe" if style == "retro" else "retro"
+            return "menu", new_style, selected
 
     return "menu", style, selected
