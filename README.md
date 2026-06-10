@@ -74,7 +74,7 @@ O terminal principal do VibeOS permanece baseado em comandos tradicionais.
 | `music` | Biblioteca de músicas do sistema |
 | `vibegotchi` | Mascote virtual do sistema |
 | `vibe_invaders` | Jogo arcade inspirado em clássicos retrô |
-| `achievements` | Jogo arcade inspirado em clássicos retrô |
+| `achievements` | Sistema de conquistas |
 
 ---
 
