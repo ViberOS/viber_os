@@ -74,6 +74,7 @@ The main VibeOS terminal remains fully command-based.
 | `music` | System music library |
 | `vibegotchi` | Virtual system pet |
 | `vibe_invaders` | Retro-inspired arcade game |
+| `Achievements` | Achievement system |
 
 ---
 
