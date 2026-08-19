@@ -165,7 +165,45 @@ O sistema possui conquistas ligadas ao uso do ViberOS, Vibe Invaders, Vibegotchi
 
 ## ➗ Expressões matemáticas
 
+<<<<<<< HEAD
 O Vibash suporta cálculos simples, por exemplo:
+=======
+Os aplicativos internos do VibeOS utilizam um sistema de navegação inspirado em jogos retrô.
+
+A navegação é feita utilizando as setas direcionais e a tecla `Enter`, proporcionando uma experiência mais fluida e imersiva dentro dos aplicativos.
+
+O terminal principal do VibeOS permanece baseado em comandos tradicionais.
+
+---
+
+## Recursos
+
+- Terminal retrô com interface monocromática verde
+- Sistema de arquivos simulado
+- Aplicativos integrados
+- Suporte a expressões matemáticas
+- Comandos secretos
+- Atmosfera de nostalgia digital
+- Sistema de jogos internos
+
+---
+
+## Aplicativos Integrados
+
+| Aplicativo | Descrição |
+|-------------|-----------|
+| `calendar` | Calendário do sistema |
+| `music` | Biblioteca de músicas do sistema |
+| `vibegotchi` | Mascote virtual do sistema |
+| `vibe_invaders` | Jogo arcade inspirado em clássicos retrô |
+| `achievements` | Sistema de conquistas |
+
+---
+
+## Expressões Matemáticas
+
+O terminal suporta cálculos simples:
+>>>>>>> 5db42724172831ac21ea93508c343c39162ef64c
 
 - `5 + 5`
 - `10 * 8`

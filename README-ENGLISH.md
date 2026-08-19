@@ -163,7 +163,35 @@ Achievements are connected to ViberOS usage, Vibe Invaders, Vibegotchi, Calendar
 
 ## ➗ Mathematical expressions
 
+<<<<<<< HEAD
 Vibash supports simple expressions such as:
+=======
+- Retro terminal with monochromatic green interface
+- Simulated file system
+- Integrated applications
+- Mathematical expression support
+- Hidden commands
+- Digital nostalgia atmosphere
+- Internal game systems
+
+---
+
+## Integrated Applications
+
+| Application | Description |
+|-------------|-------------|
+| `calendar` | System calendar |
+| `music` | System music library |
+| `vibegotchi` | Virtual system pet |
+| `vibe_invaders` | Retro-inspired arcade game |
+| `Achievements` | Achievement system |
+
+---
+
+## Mathematical Expressions
+
+The terminal supports simple calculations:
+>>>>>>> 5db42724172831ac21ea93508c343c39162ef64c
 
 - `5 + 5`
 - `10 * 8`
