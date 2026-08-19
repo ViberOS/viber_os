@@ -1,3 +1,7 @@
+# ── MIGRAÇÃO Rich → Textual ───────────────────────────────────────────────────
+# Este arquivo NÃO foi alterado na migração.
+# Boss.draw() retorna Rich Panel/Align — consumido por VibeInvadersWidget.
+# ─────────────────────────────────────────────────────────────────────────────
 import random
 from rich.panel import Panel
 from rich.text import Text

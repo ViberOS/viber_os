@@ -3,7 +3,7 @@ from rich.live import Live
 from rich.text import Text
 
 # outras importações
-from console import console
+from modules.console import console
 import time, random
 from threading import Thread, Event
 from art import text2art

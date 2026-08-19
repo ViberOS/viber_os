@@ -1,151 +1,161 @@
-from console import console, erro, aviso, limpar_tela
+from __future__ import annotations
 
-from rich.panel import Panel
-from rich import box
-from rich.align import Align
-from rich.text import Text
+import calendar
+from datetime import datetime
 
 from art import text2art
-import calendar
+from rich import box
+from rich.align import Align
+from rich.console import Group
+from rich.panel import Panel
 from rich.table import Table
-from datetime import datetime
-import msvcrt
+from rich.text import Text
+from textual.app import App, ComposeResult, RenderResult
+from textual.events import Key
+from textual.widget import Widget
+
+from modules.core.navigation import close_current_view
 
 MESES = [
     "janeiro", "fevereiro", "março", "abril", "maio", "junho",
     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
-    'jan', 'fev', 'mar', 'abril', 'maio' 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'
 ]
-
-
-def obter_ano_valido() -> int:
-    while True:
-        try:
-            ano = int(console.input("Digite um ano: "))
-            if verificar_ano_valido(ano):
-                return ano
-            aviso('Digite um ano positivo.')
-        except ValueError:
-            erro('Digite um ano válido.')
-
-
-def obter_mes_valido() -> int:
-    while True:
-        try:
-            mes_input = console.input("Digite um mês (nome ou número): ").lower().strip()
-
-            if mes_input.isdigit():
-                mes = int(mes_input)
-                if not verificar_mes_valido(mes):
-                    erro('Digite um mês válido.')
-                    continue
-            elif mes_input in MESES:
-                mes = MESES.index(mes_input) + 1
-                if mes > 12:
-                    mes -= 12
-            else:
-                erro('Digite um mês válido.')
-                continue
-
-            return mes
-        except:
-            erro('Digite um mês válido.')
-
-
-def obter_dia_valido(ano: int, mes: int) -> int:
-    _, ultimo_dia = calendar.monthrange(ano, mes)
-    while True:
-        try:
-            dia = int(console.input(f"Digite o dia (1-{ultimo_dia}): "))
-            if verificar_dia_valido(dia, ano, mes):
-                return dia
-            aviso('Digite um dia válido.')
-        except ValueError:
-            erro('Digite apenas números.')
 
 
 def verificar_ano_valido(ano: int) -> bool:
     return ano >= 1
 
+
 def verificar_mes_valido(mes: int) -> bool:
     return 1 <= mes <= 12
 
+
 def verificar_dia_valido(dia: int, ano: int, mes: int) -> bool:
-    _, ultimo_dia = calendar.monthrange(ano, mes)
-    return 1 <= dia <= ultimo_dia
+    try:
+        _, ultimo_dia = calendar.monthrange(ano, mes)
+    except calendar.IllegalMonthError:
+        return False
+    return ano >= 1 and 1 <= dia <= ultimo_dia
 
 
-def exibir_calendario(ano: int, mes: int, dia_escolhido: int) -> None:
+def _calendar_render(ano: int, mes: int, dia_escolhido: int, goto_buffer: str | None, erro_msg: str) -> Align:
     cal = calendar.monthcalendar(ano, mes)
-    titulo = f"\n[bold green3]{MESES[mes-1].upper()} / {ano}[/bold green3]"
-    tabela = Table(title=titulo, show_lines=True, header_style="bold green3")
-
+    tabela = Table(title=f"[bold green3]{MESES[mes - 1].upper()} / {ano}[/bold green3]", show_lines=True, header_style="bold green3")
     for d in ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]:
         tabela.add_column(d, justify="center")
-
     for semana in cal:
         linha = [
-            f"[bold green1][{dia}][/bold green1]" if dia == dia_escolhido else (str(dia) if dia != 0 else "")
+            f"[bold green1][{dia}][/bold green1]" if dia == dia_escolhido else (str(dia) if dia else "")
             for dia in semana
         ]
         tabela.add_row(*linha)
 
-    limpar_tela()
-    console.print(Panel(Align.center(text2art('CALENDARIO')), style='green', box=box.DOUBLE))
-    console.print(tabela)
-    console.print(Text("\n←→: Mês anterior/próximo  |  G: Ir para data  |  Q: Sair", style="dim green", justify="center"))
-    console.print()
+    titulo = Panel(Align.center(text2art("CALENDARIO")), style="green", box=box.DOUBLE)
+    if goto_buffer is None:
+        footer = Text("←→ / A,D: Mês | G: Ir para DD/MM/AAAA | Q/Esc: Voltar", style="dim green", justify="center")
+    else:
+        footer = Text()
+        footer.append("Ir para data: ", style="green")
+        footer.append(goto_buffer + "█", style="bold white")
+        footer.append("   Enter confirma | Esc cancela", style="dim green")
+        footer.justify = "center"
+    if erro_msg:
+        footer.append("\n" + erro_msg, style="bold red")
+
+    return Align.center(Panel(Group(titulo, tabela, footer), border_style="green"), vertical="middle")
+
+
+class CalendarWidget(Widget):
+    can_focus = True
+
+    def __init__(self) -> None:
+        super().__init__()
+        agora = datetime.now()
+        self.ano = agora.year
+        self.mes = agora.month
+        self.dia = agora.day
+        self.goto_buffer: str | None = None
+        self.erro_msg = ""
+
+    def on_mount(self) -> None:
+        self.focus()
+
+    def _move_month(self, delta: int) -> None:
+        total = self.ano * 12 + (self.mes - 1) + delta
+        if total < 12:  # não existe ano 0 no calendar do Python
+            self.ano, self.mes = 1, 1
+        else:
+            self.ano, zero_based = divmod(total, 12)
+            self.mes = zero_based + 1
+        self.dia = min(self.dia, calendar.monthrange(self.ano, self.mes)[1])
+
+    def _confirm_goto(self) -> None:
+        raw = (self.goto_buffer or "").strip().replace("-", "/")
+        try:
+            dia, mes, ano = (int(part) for part in raw.split("/"))
+        except (ValueError, TypeError):
+            self.erro_msg = "Formato inválido. Use DD/MM/AAAA."
+            return
+        if not verificar_dia_valido(dia, ano, mes):
+            self.erro_msg = "Data inválida."
+            return
+        self.dia, self.mes, self.ano = dia, mes, ano
+        self.goto_buffer = None
+        self.erro_msg = ""
+
+    def on_key(self, event: Key) -> None:
+        key = event.key.lower()
+        if self.goto_buffer is not None:
+            if key == "escape":
+                self.goto_buffer = None
+                self.erro_msg = ""
+            elif key == "enter":
+                self._confirm_goto()
+            elif key == "backspace":
+                self.goto_buffer = self.goto_buffer[:-1]
+                self.erro_msg = ""
+            elif len(event.character or "") == 1 and (event.character.isdigit() or event.character in "/-"):
+                if len(self.goto_buffer) < 10:
+                    self.goto_buffer += event.character
+                    self.erro_msg = ""
+            else:
+                return
+            event.stop()
+            self.refresh()
+            return
+
+        if key in {"left", "a"}:
+            self._move_month(-1)
+        elif key in {"right", "d"}:
+            self._move_month(1)
+        elif key == "g":
+            self.goto_buffer = ""
+            self.erro_msg = ""
+        elif key in {"q", "escape"}:
+            close_current_view(self)
+        else:
+            return
+        event.stop()
+        self.refresh()
+
+    def render(self) -> RenderResult:
+        return _calendar_render(self.ano, self.mes, self.dia, self.goto_buffer, self.erro_msg)
+
+
+class CalendarApp(App[None]):
+    CSS = """
+    Screen { align: center middle; background: #000000; }
+    CalendarWidget { width: 85%; height: 90%; }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield CalendarWidget()
 
 
 def calendario() -> None:
     from modules.achievements.main_achievements import desbloquear
     desbloquear("cal_primeira_vez")
-
-    agora = datetime.now()
-    ano_exibido, mes_exibido, dia_exibido = agora.year, agora.month, agora.day
-
-    while True:
-        exibir_calendario(ano_exibido, mes_exibido, dia_exibido)
-
-        key = msvcrt.getch()
-
-        if key == b'\xe0':  # seta especial
-            key2 = msvcrt.getch()
-
-            if key2 == b'K':  # seta esquerda — mês anterior
-                mes_exibido -= 1
-                if mes_exibido < 1:
-                    mes_exibido = 12
-                    ano_exibido -= 1
-
-            elif key2 == b'M':  # seta direita — próximo mês
-                mes_exibido += 1
-                if mes_exibido > 12:
-                    mes_exibido = 1
-                    ano_exibido += 1
-
-        elif key.lower() == b'g':  # G — ir para data específica
-            console.print()
-            novo_ano = obter_ano_valido()
-            novo_mes = obter_mes_valido()
-            novo_dia = obter_dia_valido(novo_ano, novo_mes)
-            ano_exibido, mes_exibido, dia_exibido = novo_ano, novo_mes, novo_dia
-
-        elif key.lower() == b'q':  # Q — sair
-            break
-
-        # compatibilidade com comandos antigos de texto
-        elif key.lower() == b'a':  # A — mês anterior
-            mes_exibido -= 1
-            if mes_exibido < 1:
-                mes_exibido = 12
-                ano_exibido -= 1
-
-        elif key.lower() == b'd':  # D — próximo mês
-            mes_exibido += 1
-            if mes_exibido > 12:
-                mes_exibido = 1
-                ano_exibido += 1
+    CalendarApp(ansi_color=True).run(mouse=False)
 
 
 if __name__ == "__main__":

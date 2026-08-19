@@ -1,5 +1,5 @@
 from rich.console import Console
-from caixa_som import caixa_som
+from modules.caixa_som import caixa_som
 
 import os
 

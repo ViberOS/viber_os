@@ -1,3 +1,4 @@
+FPS = 20
 WIDTH  = 40
 HEIGHT = 20
 

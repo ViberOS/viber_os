@@ -1,4 +1,10 @@
+# ── migração pro Textual ───────────────────────────────────────────────────
+# Este arquivo NÃO foi alterado na migração.
+# game.draw() continua retornando Rich Panel/Align — o Textual os renderiza
+# nativamente via VibeInvadersWidget.render() em widget.py.
+# ─────────────────────────────────────────────────────────────────────────────
 import random
+import os
 from rich.panel import Panel
 from rich.text import Text
 from rich.align import Align
@@ -8,7 +14,7 @@ from modules.space_invader.config import WIDTH, HEIGHT
 from modules.space_invader import sound
 from modules.space_invader.boss import Boss
 
-BOSS_WAVE = 10
+BOSS_WAVE = int(os.environ.get("VIBEROS_BOSS_WAVE", "10"))
 
 
 def _formation_linha() -> list:

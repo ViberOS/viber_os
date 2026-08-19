@@ -1,148 +1,131 @@
-# importação de modules
-from console import console, limpar_tela, erro, aviso
-from caixa_som import caixa_som
+from __future__ import annotations
 
-# importação de Rich
-from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
-from rich import box
-from rich.align import Align
+from modules.caixa_som import caixa_som
+from modules.core.logger import logger
+from modules.core.paths import USER_DATA_FILE
+from modules.core.security import hash_password, verify_password
+from modules.core.storage import load_json, save_json
 
-# outras importações
-from time import sleep
-from winsound import Beep
-from pathlib import Path
-from json import dump, load
-from art import text2art
-from pwinput import pwinput
 
 def boot() -> None:
-    limpar_tela()
-    console.print("\n")
+    """Inicialização visual do ViberOS usando Textual."""
+    logger.info("Boot started")
+    try:
+        caixa_som.init()
+        caixa_som.tocar_musica(
+            "playstation-2-startup-intro-ps2.mp3",
+            loop=0,
+            salvar_musica_atual=False,
+            transicao=False,
+        )
+    except Exception:
+        logger.exception("Boot audio unavailable")
 
-    caixa_som.init()
-    caixa_som.tocar_musica('playstation-2-startup-intro-ps2.mp3', loop=0, fadeout=5000)
-    
-    etapas = ['Iniciando aplicativos...', 'Entrando na vibe...', 'Codando...', 'Organizando pastas...', 'Deixando tudo pronto...']
-    with Progress(SpinnerColumn('bouncingBar', style="green"), TextColumn("[green]{task.description}"), BarColumn(bar_width=40, style="green", complete_style="bright_green"), console=console, transient=True) as progress:
-        tarefa = progress.add_task("Inicializando...", total=len(etapas))
-        for etapa in etapas:
-            progress.update(tarefa, description=etapa, advance=1)
-            sleep(1)
+    from modules.ui.lifecycle import run_boot
+    run_boot()
 
-    console.print(Panel("[bold bright_green]  ViberOS INICIALIZADO COM SUCESSO!  [/bold bright_green]", border_style="bright_green", box=box.DOUBLE), justify="center")
-    sleep(1)
 
 def boas_vindas() -> None:
-    limpar_tela()
+    """Splash pós-login em Textual e início da playlist do sistema."""
+    try:
+        caixa_som.init()
+        caixa_som.tocar_musica(
+            "ViberOS.mp3", volume=0.5, loop=0, salvar_musica_atual=True
+        )
+    except Exception:
+        logger.exception("Welcome music unavailable")
 
-    caixa_som.init()
-    caixa_som.tocar_musica('ViberOS.mp3', volume=0.5)
+    from modules.ui.lifecycle import run_welcome
+    run_welcome()
 
-    console.print(Panel(Align.center(text2art('Bem vindo ao ViberOS!')), border_style="green", box=box.DOUBLE))
-    sleep(1)
 
-def coletar_dados() -> None:
-    # coleta idade
-    limpar_tela()
-    console.print(Panel("[bold bright_green]  DIGITE SUA IDADE:  [/bold bright_green]", border_style="bright_green", box=box.DOUBLE), justify="center")
-    while True:
-        try:
-            idade = int(console.input('>>> '))
+def coletar_dados() -> bool:
+    """Executa o wizard Textual de criação do usuário local."""
+    from modules.ui.lifecycle import run_user_setup
 
-            if idade < 0 or idade > 125:
-                aviso('Idade inválida.')
-            else:
-                break
-        except:
-            erro('Digite apenas números.')
-
-    sleep(0.5)
-
-    dados = {"idade": idade}
-    caminho = Path(__file__).parent.parent / 'dados' / 'dados_usuario.json'
-    caminho.parent.mkdir(parents=True, exist_ok=True)
-    
-    with open(caminho, "w+") as arquivo:
-        dump(dados, arquivo, indent=4, ensure_ascii=False)
-    
-    if idade < 18:
-        return
-    
-    # coleta o nome de usuário
-    limpar_tela()
-    console.print(Panel("[bold bright_green]  DIGITE SEU NOME DE USUÁRIO:  [/bold bright_green]", border_style="bright_green", box=box.DOUBLE), justify="center")
-    while True:
-        nome = console.input('>>> ').strip()
-
-        if len(nome) < 3:
-            aviso('O nome deve possui, pelo menos, 3 caracteres.')
-        else:
-            break
-    
-    sleep(0.5)
-
-    # define a senha do usuário
-    limpar_tela()
-    console.print(Panel("[bold bright_green]  DEFINA SUA SENHA:  [/bold bright_green]", border_style="bright_green", box=box.DOUBLE), justify="center")
-    console.print('>>> ', end='')
-    senha = pwinput('').strip()
-
-    dados = {"idade": idade, "nome": nome, "senha": senha}
-    with open(caminho, "w", encoding="utf-8") as arquivo:
-        dump(dados, arquivo, indent=4, ensure_ascii=False)
-    
-    sleep(0.5)
-
-def menor_idade() -> None:
-    limpar_tela()
-    console.print("\n")
-    console.print(Panel("[bold bright_green]  Acesso bloqueado no Brasil devido à sua idade.  [/bold bright_green]", border_style="bright_green", box=box.DOUBLE), justify="center")
-    console.input('>>> ')
-
-def checar_sehha(primeira_vez: bool =False) -> bool:
-
-    if not primeira_vez:
-        caminho = Path(__file__).parent.parent / 'dados' / 'dados_usuario.json'
-        with open(caminho, "r", encoding="utf-8") as arquivo:
-            dados = load(arquivo)
-        
-        for i in range(0, 3):
-            limpar_tela()
-            console.print(Panel("[bold bright_green]  DIGITE SUA SENHA:  [/bold bright_green]", border_style="bright_green", box=box.DOUBLE), justify="center")
-            
-            if i > 0:
-                console.print(Panel(Align.center(f'[red]Senha incorreta. {3 - i} tentaivas antes do desligamento forçado.[/red]'), border_style="red", box=box.DOUBLE))
-            
-            console.print('>>> ', end='')
-            senha = pwinput('')
-            
-            if senha == dados['senha']:
-                return True
-    
+    profile = run_user_setup()
+    if not profile or "idade" not in profile:
+        logger.warning("User setup cancelled before creating a profile")
         return False
-    
+
+    idade = int(profile["idade"])
+    if idade < 18:
+        save_json(USER_DATA_FILE, {"idade": idade})
+        return True
+
+    nome = str(profile.get("nome", "")).strip()
+    senha = str(profile.get("senha", ""))
+    if len(nome) < 3 or len(senha) < 4:
+        logger.warning("Textual user setup returned incomplete data")
+        return False
+
+    salt, password_hash = hash_password(senha)
+    save_json(
+        USER_DATA_FILE,
+        {
+            "idade": idade,
+            "nome": nome,
+            "password_salt": salt,
+            "password_hash": password_hash,
+        },
+    )
+    logger.info("Local user profile created")
     return True
 
+
+def menor_idade() -> None:
+    """Mostra o bloqueio etário no Textual."""
+    from modules.ui.lifecycle import run_age_blocked
+    run_age_blocked()
+
+
+def checar_senha(primeira_vez: bool = False) -> bool:
+    if primeira_vez:
+        return True
+
+    dados = load_json(USER_DATA_FILE, {})
+    if not dados:
+        return False
+
+    def validar(senha: str) -> bool:
+        valid = False
+        if dados.get("password_hash") and dados.get("password_salt"):
+            valid = verify_password(senha, dados["password_salt"], dados["password_hash"])
+        elif "senha" in dados:
+            # Migração automática do formato antigo (texto puro) para PBKDF2.
+            valid = senha == str(dados.get("senha", ""))
+            if valid:
+                salt, password_hash = hash_password(senha)
+                dados.pop("senha", None)
+                dados["password_salt"] = salt
+                dados["password_hash"] = password_hash
+                save_json(USER_DATA_FILE, dados)
+                logger.info("Migrated legacy plaintext password")
+        return valid
+
+    from modules.ui.lifecycle import run_password_login
+    return run_password_login(validar)
+
+
+# Compatibilidade com o nome antigo enquanto o restante do projeto é refinado.
+def checar_sehha(primeira_vez: bool = False) -> bool:
+    return checar_senha(primeira_vez)
+
+
 def desligamento() -> None:
-    limpar_tela()
-    console.print("\n")
-    etapas = ['Desligando aplicativos...', 'Saindo da vibe...', 'Salvando pastas...', 'Deixando tudo pronto para desligar...']
-    with Progress(SpinnerColumn('bouncingBar', style="green"), TextColumn("[green]{task.description}"), BarColumn(bar_width=40, style="green", complete_style="bright_green"), console=console, transient=True) as progress:
-        tarefa = progress.add_task("Inicializando...", total=len(etapas))
-        for etapa in etapas:
-            progress.update(tarefa, description=etapa, advance=1)
-            Beep(900, 300)
-            sleep(0.3)
+    """Fallback de desligamento Textual para saídas fora do App principal."""
+    try:
+        caixa_som.pausar_musica()
+    except Exception:
+        pass
 
-    console.print(Panel("[bold bright_green]  OBRIGADO POR USAR ViberOS! :)  [/bold bright_green]", border_style="bright_green", box=box.DOUBLE), justify="center")
+    from modules.ui.lifecycle import run_shutdown
+    run_shutdown()
+    logger.info("ViberOS shutdown")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     boot()
-    sleep(1)
-    coletar_dados()
-    sleep(1)
-    checar_sehha()
-    sleep(1)
+    if coletar_dados():
+        checar_senha(primeira_vez=True)
     desligamento()

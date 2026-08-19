@@ -1,6 +1,6 @@
 import time
 import random
-from console import console
+from modules.console import console
 from rich.live import Live
 from rich.text import Text
 

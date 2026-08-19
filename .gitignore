@@ -1,3 +1,7 @@
+logs/
+config.json
+*.tmp
+
 # pastas e arquivos criadas durante a execução
 home/
 score/
@@ -114,4 +118,7 @@ dmypy.json
 
 .cursorignore
 .cursorindexingignore
-modules/menu.py
+
+# recompensas musicais copiadas para a biblioteca em runtime
+medias/sons/musicas/happy_vibe.mp3
+medias/sons/musicas/memory_drift.mp3
